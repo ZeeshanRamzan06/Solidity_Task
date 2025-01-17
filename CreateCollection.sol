@@ -8,7 +8,7 @@ contract NFTMinting {
         address collection;
         address owner;
         uint256 collectionId;
-        uint256 price;  // Added price field
+        uint256 price; 
     }
     
     struct Collection {
@@ -24,7 +24,7 @@ contract NFTMinting {
         address owner;
         uint256 collectionId;
         string collectionName;
-        uint256 price;    // Added price field
+        uint256 price; 
     }
     
 // Events
@@ -35,12 +35,12 @@ contract NFTMinting {
  // Mappings
     mapping(string => uint256) private collectionNameToId;
     mapping(uint256 => NFT) public nfts;
-    mapping(uint256 => Collection) public collections;
+    mapping(uint256 => Collection) private  collections;
     mapping(address => uint256[]) public userNFTs;
     mapping(address => uint256[]) public creatorCollections;
     mapping(address => uint256[]) public collectionNFTs;
-    mapping(uint256 => bool) private usedTokenIds;
-    mapping(uint256 => bool) private usedCollectionIds;
+    mapping(uint256 => bool) private  usedTokenIds;
+    mapping(uint256 => bool) private  usedCollectionIds;
     mapping(address => bool) public authorizedContracts;
 
     uint256 private tokenCounter;
@@ -123,23 +123,6 @@ contract NFTMinting {
         return collectionId;
     }
 
-    function getCollectionByName(string calldata _name) public view returns (
-        uint256 collectionId,
-        string memory name,
-        address creator,
-        bool exists
-    ) {
-        uint256 id = collectionNameToId[_name];
-        require(id != 0, "Collection not found");
-        
-        Collection memory collection = collections[id];
-        return (
-            collection.collectionId,
-            collection.name,
-            collection.creator,
-            collection.exists
-        );
-    }
 
     function getCreatorCollections(address _creator) public view returns (Collection[] memory) {
         uint256[] memory collectionIds = creatorCollections[_creator];
@@ -152,12 +135,12 @@ contract NFTMinting {
         return result;
     }
 
-    function mintNFT(uint256 _collectionId, string calldata _name, uint256 _price) public returns (uint256) {
+    function mintNFT(uint256 _collectionId, string calldata _name ,uint256 _price) public returns (uint256) {
         require(collections[_collectionId].exists, "Invalid collection ID");
         require(bytes(_name).length > 0, "Name cannot be empty");
         require(bytes(_name).length <= MAX_NAME_LENGTH, "Name is too long");
-        require(_price > 0, "Price must be greater than 0");
-        
+         require(_price > 0, "Price must be greater than 0");
+
         uint256 newTokenId;
         bool unique = false;
         uint256 attempts = 0;
@@ -180,7 +163,7 @@ contract NFTMinting {
             collection: collections[_collectionId].creator,
             owner: msg.sender,
             collectionId: _collectionId,
-            price: _price      // Added price
+            price: _price 
         });
         
         userNFTs[msg.sender].push(newTokenId);
@@ -205,7 +188,7 @@ contract NFTMinting {
                 owner: nft.owner,
                 collectionId: nft.collectionId,
                 collectionName: collection.name,
-                price: nft.price    // Added price
+                price: nft.price 
             });
         }
         
@@ -226,7 +209,7 @@ contract NFTMinting {
                 owner: nft.owner,
                 collectionId: nft.collectionId,
                 collectionName: collection.name,
-                price: nft.price    // Added price
+                price: nft.price 
             });
         }
         
@@ -238,30 +221,18 @@ contract NFTMinting {
     }
    
     function transferNFT(uint256 _tokenId, address _newOwner) external onlyAuthorized {
-        require(_tokenId != 0, "Invalid token ID");
-        require(_newOwner != address(0), "Invalid new owner");
-        require(tokenExists(_tokenId), "Token does not exist");
-        
         NFT storage nft = nfts[_tokenId];
         address previousOwner = nft.owner;
-        require(previousOwner != _newOwner, "Already owner");
-        
         nft.owner = _newOwner;
 
-        // Remove from previous owner's array
-        bool found = false;
         uint256[] storage ownerTokens = userNFTs[previousOwner];
         for (uint256 i = 0; i < ownerTokens.length; i++) {
             if (ownerTokens[i] == _tokenId) {
                 ownerTokens[i] = ownerTokens[ownerTokens.length - 1];
                 ownerTokens.pop();
-                found = true;
                 break;
             }
         }
-        require(found, "Token not found in owner's array");
-        
-        // Add to new owner's array
         userNFTs[_newOwner].push(_tokenId);
 
         emit NFTTransferred(_tokenId, previousOwner, _newOwner);
@@ -271,3 +242,7 @@ contract NFTMinting {
         return nfts[_tokenId].tokenId != 0;
     }
 }
+
+
+
+
